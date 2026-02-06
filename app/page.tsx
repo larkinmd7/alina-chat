@@ -250,10 +250,13 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({
+          messages: messages.map(m => ({
             role: m.role,
             content: m.content
-          }))
+          })).concat([{
+            role: userMessage.role,
+            content: userMessage.content
+          }])
         })
       });
 
