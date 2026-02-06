@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer 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',
+        'Authorization': 'Bearer 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',
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://alina-chat.netlify.app',
         'X-Title': 'Alina Chat'
