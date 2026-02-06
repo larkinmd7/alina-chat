@@ -154,6 +154,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Инициализация session ID
   useEffect(() => {
@@ -289,6 +290,8 @@ export default function Home() {
       alert('Ошибка соединения. Проверь интернет и попробуй снова');
     } finally {
       setLoading(false);
+      // Вернуть фокус на поле ввода
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
@@ -379,6 +382,7 @@ export default function Home() {
       <div className="bg-gray-900 border-t border-gray-800 p-4">
         <div className="max-w-4xl mx-auto flex gap-3">
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
