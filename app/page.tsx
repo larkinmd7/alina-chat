@@ -186,35 +186,25 @@ export default function Home() {
 
   // Загрузка истории
   const loadMessages = async (sid: string) => {
-    try {
-      const response = await fetch(`/api/messages?session=${sid}`);
-      if (response.ok) {
-        const data = await response.json();
-        const loadedMessages = data.messages || [];
-
-        // Если сообщений нет - загружаем начальную переписку
-        if (loadedMessages.length === 0) {
-          setMessages(INITIAL_CONVERSATION);
-          // Сохраняем начальную переписку с передачей sid
-          await saveMessages(INITIAL_CONVERSATION, sid);
-        } else {
-          setMessages(loadedMessages);
-        }
-        return;
-      }
-    } catch (error) {
-      console.error('Ошибка загрузки истории:', error);
-    }
-
-    // Fallback на localStorage
+    // Сначала проверяем localStorage
     const stored = localStorage.getItem(`alina_messages_${sid}`);
+
     if (stored) {
-      setMessages(JSON.parse(stored));
-    } else {
-      // Если даже в localStorage ничего нет - загружаем начальную переписку
-      setMessages(INITIAL_CONVERSATION);
-      await saveMessages(INITIAL_CONVERSATION, sid);
+      // Если есть сохраненная история - загружаем её
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.length > 0) {
+          setMessages(parsed);
+          return;
+        }
+      } catch (e) {
+        console.error('Parse error:', e);
+      }
     }
+
+    // Если нет сохраненной истории - загружаем начальную переписку
+    setMessages(INITIAL_CONVERSATION);
+    await saveMessages(INITIAL_CONVERSATION, sid);
   };
 
   // Сохранение сообщения
