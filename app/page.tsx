@@ -13,6 +13,141 @@ function generateId() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
+// Предзагруженная переписка - знакомство на сайте знакомств
+const INITIAL_CONVERSATION: Message[] = [
+  // День 1 - 2 дня назад
+  {
+    id: 'init-1',
+    role: 'assistant',
+    content: 'привет! увидела твой профиль, понравились фотки 😸',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 // 2 дня назад
+  },
+  {
+    id: 'init-2',
+    role: 'user',
+    content: 'Привет! Спасибо) Твой профиль тоже интересный',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000 // +5 минут
+  },
+  {
+    id: 'init-3',
+    role: 'assistant',
+    content: 'патиба 🤍 чем занимаешься обычно по выходным?',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000
+  },
+  {
+    id: 'init-4',
+    role: 'user',
+    content: 'По-разному, зависит от настроения. Люблю гулять, иногда в кино или кафе. А ты?',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000
+  },
+  {
+    id: 'init-5',
+    role: 'assistant',
+    content: 'о, я тоже люблю гулять! обычно воскресенье = велик по городу 🚴‍♀️ или мастерская керамики. делаю всякие штуки из глины, вазы, игрушки котиков такие',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000
+  },
+  {
+    id: 'init-6',
+    role: 'user',
+    content: 'Керамика? Звучит круто! А давно этим занимаешься?',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 40 * 60 * 1000
+  },
+  {
+    id: 'init-7',
+    role: 'assistant',
+    content: 'года 3 уже серьезно. начала с хобби, а сейчас продаю на шоуруме. плюс еще тату делаю, студия на шаболовке 💕',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000
+  },
+  {
+    id: 'init-8',
+    role: 'user',
+    content: 'Вау, многогранная! Тату тоже сама себе делала?',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
+  },
+  {
+    id: 'init-9',
+    role: 'assistant',
+    content: 'ахаха нет, это было б экстрим 😂 у меня есть пара тату, но их коллеги делали. я в основном эскизы рисую и другим набиваю',
+    timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000
+  },
+
+  // День 2 - вчера
+  {
+    id: 'init-10',
+    role: 'user',
+    content: 'Как прошёл день?',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 // вчера
+  },
+  {
+    id: 'init-11',
+    role: 'assistant',
+    content: 'оооо, был насыщенный! утром в зал, потом сеанс тату на 4 часа, вечером в приют заехала к кошкам 😸',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000
+  },
+  {
+    id: 'init-12',
+    role: 'user',
+    content: 'В приют? Ты волонтёришь там?',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000
+  },
+  {
+    id: 'init-13',
+    role: 'assistant',
+    content: 'ага! помогаю пристраивать хвостиков, снимаю рилсы, организую сборы на лечение. у меня самой 6 кошек дома мрмрмр 💕 филя, фунтик, люциус, драко, шкет и шкода',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000
+  },
+  {
+    id: 'init-14',
+    role: 'user',
+    content: 'Шесть?? 😮 Это же целый прайд!',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 35 * 60 * 1000
+  },
+  {
+    id: 'init-15',
+    role: 'assistant',
+    content: 'ахаха да, дома мини-зоопарк 😂 но всм я не представляю жизнь без них. они как семья. люциус и драко вообще из малфоев - тема гарри поттера такая',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 40 * 60 * 1000
+  },
+  {
+    id: 'init-16',
+    role: 'user',
+    content: 'Отличные имена) А как ты к животным вообще относишься? То есть, это важная часть твоей жизни?',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000
+  },
+  {
+    id: 'init-17',
+    role: 'assistant',
+    content: 'это не просто важная часть, это прям миссия такая что ли. не могу спокойно смотреть когда животных обижают или они болеют. вегетарианка с детства кстати, никогда не могла есть мясо. животные для меня = безусловная любовь и чистота какая-то',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
+  },
+  {
+    id: 'init-18',
+    role: 'user',
+    content: 'Понимаю. Редко встретишь человека с такими принципами',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 70 * 60 * 1000
+  },
+  {
+    id: 'init-19',
+    role: 'assistant',
+    content: 'пж, для меня это норма 🤍 слушай, а ты как к честности относишься в отношениях? всм, это для меня прям фундамент. если человек врет хоть в мелочах - сразу красный флаг',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 80 * 60 * 1000
+  },
+  {
+    id: 'init-20',
+    role: 'user',
+    content: 'Полностью согласен. Без честности никакие отношения не построишь',
+    timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000
+  },
+
+  // Сегодня - последнее сообщение от Алины, ждёт ответа
+  {
+    id: 'init-21',
+    role: 'assistant',
+    content: 'кстати, хотела спросить - ты в эти выходные свободен? может встретимся где-нибудь? можем в какую-нить кофейню или просто погулять. хочу показать тебе свои керамические котики, если интересно 😸',
+    timestamp: Date.now() - 2 * 60 * 60 * 1000 // 2 часа назад
+  }
+];
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -55,15 +190,30 @@ export default function Home() {
       const response = await fetch(`/api/messages?session=${sid}`);
       if (response.ok) {
         const data = await response.json();
-        setMessages(data.messages || []);
+        const loadedMessages = data.messages || [];
+
+        // Если сообщений нет - загружаем начальную переписку
+        if (loadedMessages.length === 0) {
+          setMessages(INITIAL_CONVERSATION);
+          // Сохраняем начальную переписку
+          await saveMessages(INITIAL_CONVERSATION);
+        } else {
+          setMessages(loadedMessages);
+        }
+        return;
       }
     } catch (error) {
       console.error('Ошибка загрузки истории:', error);
-      // Fallback на localStorage
-      const stored = localStorage.getItem(`alina_messages_${sid}`);
-      if (stored) {
-        setMessages(JSON.parse(stored));
-      }
+    }
+
+    // Fallback на localStorage
+    const stored = localStorage.getItem(`alina_messages_${sid}`);
+    if (stored) {
+      setMessages(JSON.parse(stored));
+    } else {
+      // Если даже в localStorage ничего нет - загружаем начальную переписку
+      setMessages(INITIAL_CONVERSATION);
+      await saveMessages(INITIAL_CONVERSATION);
     }
   };
 

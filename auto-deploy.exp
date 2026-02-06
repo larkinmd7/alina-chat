@@ -1,0 +1,27 @@
+#!/usr/bin/expect -f
+set timeout 120
+
+spawn netlify deploy --prod --dir=.next
+
+expect {
+    "What would you like to do?" {
+        send "\r"
+        expect {
+            "How do you want to link" {
+                send "\r"
+                expect "Project name" {
+                    send "alina-chat\r"
+                }
+            }
+        }
+        exp_continue
+    }
+    "Deploy path:" {
+        send "\r"
+    }
+    timeout {
+        puts "Timeout!"
+        exit 1
+    }
+    eof
+}
