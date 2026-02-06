@@ -111,7 +111,7 @@ export async function POST(request: Request) {
         'X-Title': 'Alina Chat'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-thinking-exp:free',
+        model: 'google/gemini-2.0-flash-001',
         messages: [
           {
             role: 'system',
