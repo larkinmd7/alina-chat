@@ -195,8 +195,8 @@ export default function Home() {
         // Если сообщений нет - загружаем начальную переписку
         if (loadedMessages.length === 0) {
           setMessages(INITIAL_CONVERSATION);
-          // Сохраняем начальную переписку
-          await saveMessages(INITIAL_CONVERSATION);
+          // Сохраняем начальную переписку с передачей sid
+          await saveMessages(INITIAL_CONVERSATION, sid);
         } else {
           setMessages(loadedMessages);
         }
@@ -213,14 +213,16 @@ export default function Home() {
     } else {
       // Если даже в localStorage ничего нет - загружаем начальную переписку
       setMessages(INITIAL_CONVERSATION);
-      await saveMessages(INITIAL_CONVERSATION);
+      await saveMessages(INITIAL_CONVERSATION, sid);
     }
   };
 
   // Сохранение сообщения
-  const saveMessages = async (newMessages: Message[]) => {
+  const saveMessages = async (newMessages: Message[], sid?: string) => {
+    const currentSessionId = sid || sessionId;
+
     // Локальное сохранение
-    localStorage.setItem(`alina_messages_${sessionId}`, JSON.stringify(newMessages));
+    localStorage.setItem(`alina_messages_${currentSessionId}`, JSON.stringify(newMessages));
 
     // Синхронизация с сервером
     try {
@@ -228,7 +230,7 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          session: sessionId,
+          session: currentSessionId,
           messages: newMessages
         })
       });
@@ -267,6 +269,18 @@ export default function Home() {
 
       const data = await response.json();
 
+      if (!response.ok || data.error) {
+        console.error('API Error:', data.error || 'Unknown error');
+        alert('Ошибка при получении ответа: ' + (data.error || 'Попробуй ещё раз'));
+        return;
+      }
+
+      if (!data.message) {
+        console.error('No message in response:', data);
+        alert('Пустой ответ от сервера. Попробуй ещё раз');
+        return;
+      }
+
       const assistantMessage: Message = {
         id: generateId(),
         role: 'assistant',
@@ -279,6 +293,7 @@ export default function Home() {
       await saveMessages(updatedMessages);
     } catch (error) {
       console.error('Ошибка:', error);
+      alert('Ошибка соединения. Проверь интернет и попробуй снова');
     } finally {
       setLoading(false);
     }
