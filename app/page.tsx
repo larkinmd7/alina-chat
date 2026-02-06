@@ -1,11 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Sidebar from './components/Sidebar';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  timestamp: number;
+}
+
+interface ChatSession {
+  id: string;
+  name: string;
+  lastMessage: string;
   timestamp: number;
 }
 
@@ -153,6 +161,8 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -215,6 +225,9 @@ export default function Home() {
     // Локальное сохранение
     localStorage.setItem(`alina_messages_${currentSessionId}`, JSON.stringify(newMessages));
 
+    // Обновить метаданные сессии
+    updateSessionMetadata(currentSessionId, newMessages);
+
     // Синхронизация с сервером
     try {
       await fetch('/api/messages', {
@@ -228,6 +241,66 @@ export default function Home() {
     } catch (error) {
       console.error('Ошибка синхронизации:', error);
     }
+  };
+
+  // Загрузка всех сессий
+  const loadSessions = () => {
+    const sessionsData: ChatSession[] = [];
+    const keys = Object.keys(localStorage);
+
+    keys.forEach(key => {
+      if (key.startsWith('alina_messages_')) {
+        const sid = key.replace('alina_messages_', '');
+        const messagesJson = localStorage.getItem(key);
+        if (messagesJson) {
+          try {
+            const msgs: Message[] = JSON.parse(messagesJson);
+            if (msgs.length > 0) {
+              const lastMsg = msgs[msgs.length - 1];
+              sessionsData.push({
+                id: sid,
+                name: msgs[0]?.role === 'assistant' ? msgs[0].content.substring(0, 30) + '...' : `Чат ${sid.substring(8, 13)}`,
+                lastMessage: lastMsg.content.substring(0, 50) + (lastMsg.content.length > 50 ? '...' : ''),
+                timestamp: lastMsg.timestamp
+              });
+            }
+          } catch (e) {
+            console.error('Parse error:', e);
+          }
+        }
+      }
+    });
+
+    sessionsData.sort((a, b) => b.timestamp - a.timestamp);
+    setSessions(sessionsData);
+  };
+
+  // Обновление метаданных сессии
+  const updateSessionMetadata = (sid: string, msgs: Message[]) => {
+    loadSessions();
+  };
+
+  // Создание нового чата
+  const createNewChat = () => {
+    const newSid = `session-${Date.now()}`;
+    window.location.href = `?session=${newSid}`;
+  };
+
+  // Переключение на другую сессию
+  const switchSession = (sid: string) => {
+    window.location.href = `?session=${sid}`;
+  };
+
+  // Создание ветки от сообщения
+  const branchFromMessage = (messageIndex: number) => {
+    const newSid = `session-${Date.now()}`;
+    const branchMessages = messages.slice(0, messageIndex + 1);
+
+    // Сохранить ветку
+    localStorage.setItem(`alina_messages_${newSid}`, JSON.stringify(branchMessages));
+
+    // Переключиться на ветку
+    window.location.href = `?session=${newSid}`;
   };
 
   // Отправка сообщения
@@ -303,7 +376,19 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 text-gray-100">
+    <div className="flex h-screen bg-gray-950 text-gray-100">
+      {/* Sidebar */}
+      <Sidebar
+        sessions={sessions}
+        currentSessionId={sessionId}
+        onSelectSession={switchSession}
+        onNewChat={createNewChat}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
+
+      {/* Main content */}
+      <div className={`flex flex-col flex-1 transition-all duration-200 ${sidebarOpen ? 'md:ml-80' : ''}`}>
       {/* Header */}
       <div className="bg-gray-900 border-b border-gray-800 p-4 shadow-lg">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -339,11 +424,30 @@ export default function Home() {
             </div>
           )}
 
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
               key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
             >
+              {/* Avatar для Алины с кнопкой ветвления */}
+              {message.role === 'assistant' && (
+                <div className="relative mr-2 flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
+                    А
+                  </div>
+                  {/* Кнопка ветвления - появляется при наведении */}
+                  <button
+                    onClick={() => branchFromMessage(index)}
+                    className="absolute -right-1 -top-1 w-5 h-5 bg-blue-600 hover:bg-blue-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    title="Создать ветку от этого сообщения"
+                  >
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
@@ -399,6 +503,7 @@ export default function Home() {
             {loading ? '...' : 'Отправить'}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
